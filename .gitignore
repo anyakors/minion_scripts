@@ -1,6 +1,12 @@
-adapter_events.png adapter_expected1.png adapter_expected_perfect.png adapter_expected.png rna_5_ch_100_less.png rna_5_ch_100_more.png rna_5_ch_100.png saturated_channel_bulkvis.png
-nanopore_info.pdf
-rna_11_ch_187.html rna_3_ch_300.html rna_3_ch_40.html rna_3_ch_43.html rna_3_ch_60.html RNA3_read_124_ch_393.html RNA3_read_133_ch_45.html RNA3_read_148_ch_440.html rna_5_ch_100_all_reads.html rna_5_ch_100_pass_fail.html rna_5_ch_100_read_6.html RNA9_ch_10.html RNA9_read_182_ch_60.html
-mookse_Veriton_X4650G_20180613_FAH54029_MN21778_sequencing_run_RNA3_G4_false_79563.fast5 mookse_Veriton_X4650G_20180613_FAH54029_MN21778_sequencing_run_RNA3_G4_false_79563_read_131_ch_300_strand.fast5 mookse_Veriton_X4650G_20180618_FAH54070_MN21778_sequencing_run_RNA5_long_G4_49077_read_6_ch_100_strand.fast5
-RNA3
-RNA9
+*.png
+*.pdf
+*.html
+*.fast5
+RNA3/*.png
+RNA3/*.pdf
+RNA3/*.html
+RNA3/*.fast5
+RNA9/*.png
+RNA9/*.pdf
+RNA9/*.html
+RNA9/*.fast5
