@@ -9,6 +9,10 @@ import matplotlib.pyplot as plt
 from scipy import stats
 from scipy.interpolate import UnivariateSpline
 
+from tombo import tombo_helper, tombo_stats, resquiggle
+import mappy
+
+
 
 def extract_adapter_events(events, states):
 
@@ -52,7 +56,7 @@ def extract_adapter_events(events, states):
         for l in np.arange(0, len(region_mean)):
             buf_region.extend(np.repeat(region_mean[l], region_lens[l]))
         #adapter_region_events.append(region_mean)                       #just mean
-        adapter_region_events.append(buf_region)                       #mean*length
+        adapter_region_events.append(buf_region)                         #mean*length
         buf_region = []
 
     print('region len:', len(adapter_region_events))
@@ -79,13 +83,36 @@ data = extract_adapter_events(events, states)
 
 print(np.shape(data[0]))
 
+
+
+
+#tombo_model = '/home/mookse/anaconda3/pkgs/ont-tombo-1.4-py36r341h24bf2e0_0/lib/python3.6/site-packages/tombo/tombo_models/tombo.DNA.model'
+tombo_model = '/home/mookse/anaconda3/pkgs/ont-tombo-1.5-py36r341h24bf2e0_0/lib/python3.6/site-packages/tombo/tombo_models/tombo.DNA.model'
+reference_fn = 'GGCTTCTTCTTGCTCTTAGGTAGTAGGTTC'
+
+instance = tombo_stats.TomboModel(tombo_model)
+print([func for func in dir(tombo_stats.TomboModel) if callable(getattr(tombo_stats.TomboModel, func))])
+
+std_model = instance.get_exp_levels_from_seq(reference_fn, rev_strand=False)
+
+print(len(std_model[0]))
+print(len(reference_fn))
+
+model_new = np.repeat(std_model[0], 48, axis=0)
+model_new = np.concatenate((np.zeros(2000), model_new, np.zeros(2000)), axis=None)
+
+ax = plt.subplot(np.rint((len(data)+1)/2), 2, 1)
+plt.plot(np.arange(0, len(model_new)), model_new, 'r')
+
+
+
 #data = np.array(data)
 #array_old = data
 i = 1
 
 for instance in data:
     #instance_new = np.repeat(np.array(instance), 10, axis=0)
-    ax = plt.subplot(len(data), 1, i)
+    ax = plt.subplot(np.rint((len(data)+1)/2), 2, i+1)
     i+=1
     #plt.plot(np.arange(0, len(instance_new)), instance_new)
     plt.plot(np.arange(0, len(instance)), instance)
