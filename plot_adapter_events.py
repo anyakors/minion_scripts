@@ -22,6 +22,7 @@ def extract_adapter_events(events, states):
 
     state = np.array(states['summary_state'].astype(np.int))
     state_start = np.array(states['acquisition_raw_index'].astype(np.int))
+    #state_start = np.array(states['analysis_raw_index'].astype(np.int))
 
     start_point, end_point = [], []
     ind_start_event, ind_end_event = [], []
@@ -30,8 +31,6 @@ def extract_adapter_events(events, states):
         if state[i]==5 and state[i+1]==3:
             start_point.append(state_start[i])
             end_point.append(state_start[i+1])
-
-    print(start_point, end_point)
     
     for m in np.arange(0, len(start_point)):
         for i in np.arange(0, len(event_start)):
@@ -45,8 +44,6 @@ def extract_adapter_events(events, states):
                 ind_end_event.append(i)
                 break
 
-    print('ind_start:', len(ind_start_event), len(ind_end_event))
-
     adapter_region_events = []
     buf_region = []
 
@@ -58,8 +55,6 @@ def extract_adapter_events(events, states):
         #adapter_region_events.append(region_mean)                       #just mean
         adapter_region_events.append(buf_region)                         #mean*length
         buf_region = []
-
-    print('region len:', len(adapter_region_events))
 
     return adapter_region_events
 
@@ -76,12 +71,12 @@ def stretch_repeat(data):
 
 fast5 = h5py.File('/media/mookse/DATA1/minion_data/bulk/mookse_Veriton_X4650G_20180613_FAH54029_MN21778_sequencing_run_RNA3_G4_false_79563.fast5')
 
-events = fast5['IntermediateData']['Channel_10']['Events'][()]
-states = fast5['StateData']['Channel_10']['States'][()]
+events = fast5['IntermediateData']['Channel_50']['Events'][()]
+states = fast5['StateData']['Channel_50']['States'][()]
 
 data = extract_adapter_events(events, states)
 
-print(np.shape(data[0]))
+print('Adapter matches:', len(data))
 
 
 
@@ -95,8 +90,6 @@ print([func for func in dir(tombo_stats.TomboModel) if callable(getattr(tombo_st
 
 std_model = instance.get_exp_levels_from_seq(reference_fn, rev_strand=False)
 
-print(len(std_model[0]))
-print(len(reference_fn))
 
 model_new = np.repeat(std_model[0], 48, axis=0)
 model_new = np.concatenate((np.zeros(2000), model_new, np.zeros(2000)), axis=None)
@@ -109,10 +102,11 @@ plt.plot(np.arange(0, len(model_new)), model_new, 'r')
 #data = np.array(data)
 #array_old = data
 i = 1
+print(np.rint((len(data)+2)/2))
 
 for instance in data:
     #instance_new = np.repeat(np.array(instance), 10, axis=0)
-    ax = plt.subplot(np.rint((len(data)+1)/2), 2, i+1)
+    ax = plt.subplot(np.rint((len(data)+2)/2), 2, i+1)
     i+=1
     #plt.plot(np.arange(0, len(instance_new)), instance_new)
     plt.plot(np.arange(0, len(instance)), instance)
