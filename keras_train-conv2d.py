@@ -49,66 +49,86 @@ data = []
 labels = []
 dur = 0
 
-dataPaths = os.listdir(args["dataset"])
-dataPaths = [os.path.join(args["dataset"], dataPath) for dataPath in dataPaths]
+#dataPaths = os.listdir(args["dataset"])
+(root, dirs, files) = os.walk(args["dataset"])
+
+#dataPaths = list(filter(os.path.isdir(args["dataset"]), os.listdir(args["dataset"])))
+
+#dataPathsFull = [os.path.join(args["dataset"], dataPath) for dataPath in dataPaths] 
+# if something is not a directory
+
+dataPaths = [os.path.join(root[0], subfolder) for subfolder in root[1]] 
 files = [os.listdir(dataPath) for dataPath in dataPaths]
-dataPathsFull = [ [dataPaths[i]]*len(files[i]) for i in range(len(files)) ]
+filePaths = [ [dataPaths[i]]*len(files[i]) for i in range(len(files)) ]
+filePathsFull = []
 
-filePaths = []
-
-for sublist in zip(dataPathsFull, files):
+for sublist in zip(filePaths, files):
 	for i in range(len(sublist[0])):
-		filePaths.append(os.path.join(sublist[0][i], sublist[1][i]))
+		filePathsFull.append(os.path.join(sublist[0][i], sublist[1][i]))
 
 
-for filePath in filePaths:
+for filePath in filePathsFull:
 
 	if filePath.endswith('.fast5'):
 
 		f = h5py.File(filePath, 'r')
 		read_no = list(f['Raw']['Reads'].keys())
-		signal_read = f['Raw']['Reads'][read_no[0]]['Signal'][()]
+		signal = f['Raw']['Reads'][read_no[0]]['Signal'][()]
 
-		if int(len(signal_read)/3012)>dur:
-			dur = int(len(signal_read)/3012)
+		if int(len(signal)/3012)>dur:
+			dur = int(len(signal)/3012)
 
-		data.append(signal_read)
+		data.append(signal)
 
 		label = filePath.split(os.path.sep)[-2]
 		labels.append(label)
 
+	if "Channel" in filePath:
+
+		#signal = np.loadtxt(filePath, delimiter=',')
+		try:
+			signal = np.loadtxt(filePath, encoding='latin1', delimiter="\n")
+
+			if 1000<len(signal)<20000:
+				data.append(signal)
+				label = filePath.split(os.path.sep)[-2]
+				labels.append(label)
+
+		except ValueError:
+			print("ValueError happened, moving on")
+			continue
+		#signal = f.read()
+
+		dur = 7 # 7 is int(20000/3012)
+
+print("[INFO] done with data import...")
+
 labels = np.array(labels)
+
+print("Data array shape:", np.shape(data), ", labels array shape:", np.shape(labels))
 
 dataUni = stretch_interp(data, dur)
 dataUni = np.array(dataUni, dtype="float")
 
+print("DataUni array shape:", np.shape(dataUni))
+
 (train_x, test_x, train_y, test_y) = train_test_split(dataUni,
 	labels, test_size=0.1, random_state=14)
-
-#train_x = train_x[:, :, np.newaxis]
-#test_x = test_x[:, :, np.newaxis]
-
-print(np.shape(train_x), np.shape(train_y), np.shape(test_x), np.shape(test_y))
-
-print("labels:", train_y)
 
 lb = LabelBinarizer()
 train_y = lb.fit_transform(train_y)
 test_y = lb.transform(test_y)
 
-print("labels after transform:", train_y)
+#batch_size = np.shape(train_x)[0]
+batch_size = 32
 
-batch_size = np.shape(train_x)[0]
-
-print("train_x.shape[0]", train_x.shape[0])
-
-train_x = train_x.reshape(train_x.shape[0], 753, 16, 1)
-test_x = test_x.reshape(test_x.shape[0], 753, 16, 1)
+train_x = train_x.reshape(train_x.shape[0], 753, dur*4, 1)
+test_x = test_x.reshape(test_x.shape[0], 753, dur*4, 1)
 
 model = Sequential()
 #model.add(Conv1D(3012, input_shape=(53, dur*3012), kernel_size=(12), activation='relu'))
 
-model.add(Conv2D(32, (4,4), activation='relu', data_format="channels_last", input_shape=(753,16,1)))
+model.add(Conv2D(32, (4,4), activation='relu', data_format="channels_last", input_shape=(753, dur*4, 1)))
 print(model.input_shape, model.output_shape)
 model.add(Flatten())
 
