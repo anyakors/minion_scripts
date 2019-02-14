@@ -1,3 +1,5 @@
+#plot bulk file -- reads matches
+
 import os
 import h5py
 import pandas as pd
@@ -90,7 +92,7 @@ trace_state_p = go.Scatter(
 						color='#000000' 
 					),
 				marker = dict(
-						color = 'rgb(255, 55, 55)',
+						color = 'rgb(55, 255, 55)',
 						size = 6,
 					),
 				textposition='top center'
@@ -108,7 +110,7 @@ trace_state_f = go.Scatter(
 						color='#000000'
 					),
 				marker = dict(
-						color = 'rgb(55, 255, 55)',
+						color = 'rgb(255, 55, 55)',
 						size = 6,
 					),
 				textposition='top center'

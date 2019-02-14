@@ -30,4 +30,5 @@ print("total: ", total)
 print(dist)
 
 sns_plt = sns.distplot(dist)
+#sns_plt.set_xlim(0,10000)
 sns_plt.figure.savefig("distrib_strands_len.png")

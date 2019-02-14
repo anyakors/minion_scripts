@@ -32,7 +32,7 @@ ap.add_argument("-l", "--label-bin", required=True,
 ap.add_argument("-m", "--model", required=True,
 	help="path to output trained model")
 args = vars(ap.parse_args())
-
+ 
 (dataUni, labels) = quad_utils.data_import(args)
 
 (train_x, test_x, train_y, test_y) = train_test_split(dataUni,
@@ -41,6 +41,11 @@ args = vars(ap.parse_args())
 lb = LabelBinarizer()
 train_y = lb.fit_transform(train_y)
 test_y = lb.transform(test_y)
+
+train_y = to_categorical(train_y, num_classes=2)
+test_y = to_categorical(test_y, num_classes=2)
+
+dur = 2
 
 batch_size = 64
 
@@ -54,21 +59,21 @@ model.add(Dropout(0.25))
 model.add(Flatten())
 model.add(Dense(1024, activation="sigmoid"))
 model.add(BatchNormalization())
-model.add(Dense(512, activation="relu"))
+model.add(Dense(1024, activation="sigmoid"))
 model.add(Dropout(0.5))
-model.add(Dense(128, activation="relu"))
+model.add(Dense(512, activation="sigmoid"))
 model.add(Dropout(0.5))
-model.add(Dense(32, activation="relu"))
+model.add(Dense(128, activation="sigmoid"))
 #model.add(SimpleRNN(len(lb.classes_)))
 model.add(Dense(len(lb.classes_), activation="softmax"))
 
 INIT_LR = 0.0001
-EPOCHS = 125
- 
+EPOCHS = 25
+
 print("[INFO] training network...")
 opt = SGD(lr=INIT_LR)
 
-model.compile(loss='sparse_categorical_crossentropy', optimizer=opt, metrics=['accuracy'])
+model.compile(loss='categorical_crossentropy', optimizer=opt, metrics=['accuracy'])
 
 H = model.fit(train_x, train_y, validation_data=(test_x, test_y), 
 	epochs=EPOCHS, batch_size=batch_size)

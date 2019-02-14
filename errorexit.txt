@@ -1,0 +1,11 @@
+YASARA Version 18.4.24.L.64 detected error 2: No window can be opened.
+Please check if you accidentally tried to run YASARA as a user who is not
+allowed to connect to the X-server. If this is not the case, please contact
+support and provide these details: SDL1 Size 1024x768x1, bytes 4, flags 13,
+SDL error 'Couldn't find matching GLX visual'.
+
+No scene was saved because the soup was empty.
+To send us this error message, just attach this file to your email:
+/home/mookse/workspace/minion_scripts/errorexit.txt
+
+YASARA will exit automatically in 15 seconds...

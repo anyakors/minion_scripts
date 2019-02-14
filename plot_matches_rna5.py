@@ -1,3 +1,5 @@
+#plots all matches in a given bulk file + reads from one folder corresponding to this bulk file, marks them as pass/fail
+
 import os
 import h5py
 import pandas as pd
@@ -12,9 +14,7 @@ def rolling_window(a, size):
 
 
 #raw_fast5 = h5py.File('/media/mookse/DATA1/minion/bulk/mookse_Veriton_X4650G_20180618_FAH54070_MN21778_sequencing_run_RNA5_long_G4_49077.fast5')
-
 raw_fast5 = h5py.File('/var/lib/MinKNOW/data/mookse_Veriton_X4650G_20181213_FAH54070_MN21778_sequencing_run_RNA11_27121.fast5')
-
 signal = raw_fast5['Raw']['Channel_187']['Meta'].value
 
 #===================PASS=====================
@@ -90,7 +90,7 @@ trace_state_p = go.Scatter(
 						color='#000000' 
 					),
 				marker = dict(
-						color = 'rgb(255, 55, 55)',
+						color = 'rgb(55, 255, 55)',
 						size = 6,
 					),
 				textposition='top center'
@@ -108,7 +108,7 @@ trace_state_f = go.Scatter(
 						color='#000000'
 					),
 				marker = dict(
-						color = 'rgb(55, 255, 55)',
+						color = 'rgb(255, 55, 55)',
 						size = 6,
 					),
 				textposition='top center'

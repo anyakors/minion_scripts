@@ -1,4 +1,4 @@
-#collect and save adapter events from a bulk file
+#extracts random strand events from a given bulk file obeying normal distrib
 
 import os
 import h5py
@@ -7,9 +7,12 @@ import matplotlib.pyplot as plt
 from scipy import stats
 from scipy.interpolate import UnivariateSpline
 import argparse
+import statistics
+import seaborn as sns
 
+sns.set()
 
-def extract_adapter_events(events, states):
+def extract_strand_events(events, states):
 
     event_start = np.array(events['start'].astype(np.int))
     lengths = np.array(events['length'].astype(np.int))
@@ -24,7 +27,7 @@ def extract_adapter_events(events, states):
 
     for i in np.arange(0, len(state)):
         # state 5 -- adapter, state 3 -- strand, so we only take those adapter labels which are followed by strand
-        if state[i]==5 and state[i+1]==3: 
+        if state[i]==3: 
             start_point.append(state_start[i])
             end_point.append(state_start[i+1])
     
@@ -40,7 +43,7 @@ def extract_adapter_events(events, states):
                 ind_end_event.append(i)
                 break
 
-    adapter_region_events = []
+    strand_events = []
     buf_region = []
 
     for i in np.arange(0, len(ind_start_event)):
@@ -49,10 +52,10 @@ def extract_adapter_events(events, states):
         for l in np.arange(0, len(region_mean)):
             buf_region.extend(np.repeat(region_mean[l], region_lens[l]))
         #adapter_region_events.append(region_mean)                       #just mean
-        adapter_region_events.append(buf_region)                         #mean*length
+        strand_events.append(buf_region)                         #mean*length
         buf_region = []
 
-    return adapter_region_events
+    return strand_events
 
 
 def stretch_repeat(data): 
@@ -67,28 +70,60 @@ def stretch_repeat(data):
 
 ap = argparse.ArgumentParser()
 ap.add_argument("-f", "--file", required=True,
-    help="path to input fast5 file")
-ap.add_argument("-s", "--savedir", required=True,
-    help="path to output savedir")
-ap.add_argument("-c", "--channel", required=True,
-    help="channel number")
+    help="path to bulk fast5 file")
+#ap.add_argument("-c", "--channel", required=True,
+#    help="channel number")
+ap.add_argument("-o", "--output", required=True,
+    help="path to savedir")
+ap.add_argument("-p", "--plot", required=True,
+    help="path to plot file savedir")
 args = vars(ap.parse_args())
 
 fast5 = h5py.File(args["file"])
+i = 0
+len_arr = []
+overlay = []
 
-events = fast5['IntermediateData'][args["channel"]]['Events'][()]
-states = fast5['StateData'][args["channel"]]['States'][()]
+for key in fast5['IntermediateData'].keys():
 
-data = extract_adapter_events(events, states)
+    print(key)
+    events = fast5['IntermediateData'][key]['Events'][()]
+    states = fast5['StateData'][key]['States'][()]
+    try:
+        data = extract_strand_events(events, states)
+    except IndexError:
+        print("IndexError happened, moving on")
+        continue
+    i += 1
+    print(len(data), "strand matches")
+    for instance in data:
+        if instance:
+            len_arr.append(len(instance))
+    if len_arr and len(len_arr)>10:
+        print("After", len(len_arr), "strands, mean =", statistics.mean(len_arr), "std =", statistics.stdev(len_arr))
+    if i>512:
+        break
+    if len_arr and len(len_arr)//1000==10:
+        np.savetxt(args["output"], len_arr, delimiter=',')
+        break
 
-print('Adapter matches:', len(data))
+    # the part for plotting an overlay
+    #if 10000<len(instance)<20000:
+    #    overlay.append(instance)
+    #if overlay and len(overlay)>500:
+    #    break
 
-i = 1
-print(np.rint((len(data)+2)/2))
+#print("After", len(len_arr), "strands, mean =", statistics.mean(len_arr), "std =", statistics.stdev(len_arr))
+#np.savetxt(args["output"], len_arr, delimiter=',')
 
-for instance in data:
-    #instance_new = np.repeat(np.array(instance), 10, axis=0)
-    filename = 'adapter_{}_{}'.format(args["channel"], i)
-    np.savetxt(os.path.join(args["savedir"], filename), instance, delimiter=',')
-    i+=1
+np.savetxt(args["output"], len_arr, delimiter=',')
 
+sns_plt = sns.distplot(len_arr)
+#sns_plt.set_xlim(0, 200000)
+sns_plt.figure.savefig(args["plot"])
+
+# the part for plotting an overlay
+#for instance in overlay:
+#    plt.plot(np.arange(0,len(instance)), instance, alpha=0.5)
+
+plt.show()

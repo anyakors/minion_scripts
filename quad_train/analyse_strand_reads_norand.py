@@ -7,7 +7,10 @@ import matplotlib.pyplot as plt
 from scipy import stats
 from scipy.interpolate import UnivariateSpline
 import argparse
+import statistics
+import seaborn as sns
 
+sns.set()
 
 def extract_strand_events(events, states):
 
@@ -22,22 +25,32 @@ def extract_strand_events(events, states):
     start_point, end_point = [], []
     ind_start_event, ind_end_event = [], []
 
-    for i in np.arange(0, len(state)):
+    for i in np.arange(0, len(state)-1):
         # state 5 -- adapter, state 3 -- strand, so we only take those adapter labels which are followed by strand
         if state[i]==3: 
-            #length = np.random.randrange(2000, 10000)
-            length = abs( int((np.random.randn() + 1.5)*4000 + 700) ) + 600
-            #print("assigned random len = ", length)
             start_point.append(state_start[i])
-            end_point.append(state_start[i]+length)
+            end_point.append(state_start[i+1])
     
-    for m in np.arange(0, len(start_point)):
+    #for m in np.arange(0, len(start_point)):
+    for m in reversed(range(len(start_point))):
+        for i in np.arange(0, len(event_start)):
+            try:
+                if start_point[m]>=event_start[i] and start_point[m]<event_start[i+1]:
+                    #ind_start_event.append(i)
+                    break
+            except IndexError:
+                print("IndexError, moving on")
+                del start_point[m]
+                del end_point[m]
+                break
+
+    for m in range(len(start_point)):
         for i in np.arange(0, len(event_start)):
             if start_point[m]>=event_start[i] and start_point[m]<event_start[i+1]:
                 ind_start_event.append(i)
                 break
 
-    for m in np.arange(0, len(end_point)):
+    for m in range(len(end_point)):
         for i in np.arange(0, len(event_start)):
             if end_point[m]>=event_start[i] and end_point[m]<event_start[i+1]:
                 ind_end_event.append(i)
@@ -45,17 +58,20 @@ def extract_strand_events(events, states):
 
     strand_events = []
     buf_region = []
+    lengths = []
 
-    for i in np.arange(0, len(ind_start_event)):
+    for i in np.arange(0, len(ind_start_event)-1):
         region_mean = mean[ind_start_event[i]:ind_end_event[i]]
         region_lens = lengths[ind_start_event[i]:ind_end_event[i]]
+        buf_length = 0
         for l in np.arange(0, len(region_mean)):
-            buf_region.extend(np.repeat(region_mean[l], region_lens[l]))
+            #buf_region.extend(np.repeat(region_mean[l], region_lens[l]))
+            buf_length += region_mean[l]*region_lens[l]
         #adapter_region_events.append(region_mean)                       #just mean
-        strand_events.append(buf_region)                         #mean*length
-        buf_region = []
+        #strand_events.append(buf_region)                         #mean*length
+        lengths.append(buf_length)
 
-    return strand_events
+    return lengths
 
 
 def stretch_repeat(data): 
@@ -70,27 +86,41 @@ def stretch_repeat(data):
 
 ap = argparse.ArgumentParser()
 ap.add_argument("-f", "--file", required=True,
-    help="path to input fast5 file")
-ap.add_argument("-s", "--savedir", required=True,
-    help="path to output savedir")
-ap.add_argument("-c", "--channel", required=True,
-    help="channel number")
+    help="path to bulk fast5 file")
+#ap.add_argument("-s", "--savedir", required=True,
+#    help="path to output savedir")
+#ap.add_argument("-c", "--channel", required=True,
+#    help="channel number")
 args = vars(ap.parse_args())
 
 fast5 = h5py.File(args["file"])
 
-events = fast5['IntermediateData'][args["channel"]]['Events'][()]
-states = fast5['StateData'][args["channel"]]['States'][()]
+len_arr = []
+i = 0
 
-data = extract_strand_events(events, states)
+for key in fast5['IntermediateData'].keys():
 
-print('Strand matches:', len(data))
+    print(key)
+    events = fast5['IntermediateData'][key]['Events'][()]
+    states = fast5['StateData'][key]['States'][()]
+    try:
+        lengths = extract_strand_events(events, states)
+    except IndexError:
+        print("IndexError happened, moving on")
+        continue
 
-i = 1
+    len_arr.append(lengths)
+    i += 1
 
-for instance in data:
-    #instance_new = np.repeat(np.array(instance), 10, axis=0)
-    filename = 'strand_{}_{}'.format(args["channel"], i)
-    np.savetxt(os.path.join(args["savedir"], filename), instance, delimiter=',')
-    i+=1
+    #print("After", len(len_arr), "strands, mean =", statistics.mean(len_arr), "std =", statistics.stdev(len_arr))
 
+    if i>20:
+        break
+
+mean = statistics.mean(len_arr)
+std = statistics.stdev(len_arr)
+
+print("Overall mean =", mean, ", std =", std)
+
+sns_plt = sns.distplot(len_arr)
+sns_plt.figure.savefig("distrib_strands_len.png")

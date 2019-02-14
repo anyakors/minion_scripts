@@ -75,25 +75,24 @@ def stretch_repeat(data):
         plt.setp(ax.get_xticklabels(), visible=False)
     return
 
-fast5 = h5py.File('/media/mookse/DATA1/minion_data/bulk/mookse_Veriton_X4650G_20181213_FAH54070_MN21778_sequencing_run_RNA11_27121.fast5')
-#fast5 = h5py.File('/media/mookse/DATA1/minion_data/bulk/mookse_Veriton_X4650G_20180612_FAH54029_MN21778_sequencing_run_RNA3_G4_89485.fast5')
+#fast5 = h5py.File('/media/mookse/DATA1/minion_data/bulk/mookse_Veriton_X4650G_20181213_FAH54070_MN21778_sequencing_run_RNA11_27121.fast5')
+fast5 = h5py.File('/media/mookse/DATA1/minion_data/bulk/mookse_Veriton_X4650G_20180612_FAH54029_MN21778_sequencing_run_RNA3_G4_89485.fast5')
 data = []
 events = fast5['IntermediateData']['Channel_167']['Events'][()]
 start = np.array(events['start'].astype(np.float))
 mean = np.array(events['mean'].astype(np.float))
+length = np.array(events['length'].astype(np.int))
+signal = fast5['Raw']['Channel_167']['Signal'].value
 
-ind_start = 10000
-ind_end = 50000
+array_new = np.array(signal)
+#array_new = []
+
+#for i in np.arange(0, len(mean)):
+#    array_new.extend([mean[i]]*length[i])
 
 output_file("lines.html")
 # create a new plot with a title and axis labels
 p = figure(title="simple line example", x_axis_label='t, 1/3012s', y_axis_label='I, pA', sizing_mode='stretch_both')
-
-#region = mean[ind_start:ind_end]
-data = np.array(mean)
-array_old = data
-array_new = np.repeat(array_old, 5, axis=0)
-
 # add a line renderer with legend and line thickness
 p.line(np.arange(0,len(array_new)), array_new, legend="bulk", line_width=1)
 # show the results

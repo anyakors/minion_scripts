@@ -1,3 +1,5 @@
+#this file plots all the reads parts which correspond to G-quadruplex events in RNA3 reads, according to already basecalled files
+
 import os
 import h5py
 import pandas as pd
@@ -8,7 +10,6 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 from scipy import stats
 from scipy.interpolate import UnivariateSpline
-
 
 sns.set(color_codes=True)
 
@@ -45,7 +46,6 @@ def extract_dynamic(events, signal):
     else:
         return 0
 
-
 def stretch_interp(data):
     longest = 0
     for i in np.arange(0, len(data)):
@@ -71,7 +71,6 @@ def stretch_interp(data):
             plt.setp(ax.get_xticklabels(), visible=False)
     return
 
-
 def stretch_repeat(data):
     for i in np.arange(0, len(data)):
         array_old = data[i]
@@ -80,7 +79,6 @@ def stretch_repeat(data):
         ax.plot(np.arange(0,len(array_new)), array_new)
         plt.setp(ax.get_xticklabels(), visible=False)
     return
-
 
 fast5s = os.listdir('/home/mookse/Desktop/Analysis/RNA9_short/alb_bc/workspace/pass/0')
 data = []
@@ -103,13 +101,11 @@ for fast5 in fast5s:
 
             g_region = extract_dynamic(events, signal)
 
-            if not isinstance(g_region, int):
+            if not isinstance(g_region, int): #check if not empty
                 hit+=1
                 data.append(g_region)
 
-
 data = np.array(data)
-
 #stretch_interp(data)
 stretch_repeat(data)
 
