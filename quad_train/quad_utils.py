@@ -64,12 +64,21 @@ def data_import(args):
 				print("ValueError happened, moving on")
 				continue
 			dur = 2 # 7 is int(20000/3012)
+		if "hist" in filePath:
+			try:
+				hist = np.loadtxt(filePath, encoding='latin1', delimiter="\n")
+				data.append(hist.flatten())
+				label = filePath.split(os.path.sep)[-2]
+				labels.append(label)
+			except ValueError:
+				print("ValueError happened, moving on")
+				continue
 
 	elapsed = time.clock() - start_t
 	print("[INFO] done with data import...", elapsed, "elapsed s")
 	labels = np.array(labels)
 	print("Data array shape:", np.shape(data), ", labels array shape:", np.shape(labels))
-	dataUni = stretch_interp(data, dur)
-	dataUni = np.array(dataUni, dtype="float")
-	print("DataUni array shape:", np.shape(dataUni))
-	return (dataUni, labels)
+	#dataUni = stretch_interp(data, dur)
+	#dataUni = np.array(dataUni, dtype="float")
+	print("DataUni array shape:", np.shape(data))
+	return (data, labels)
